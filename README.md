@@ -23,3 +23,7 @@ Whats working:
   using `>` for lua code and `$(var)` for text replace 
 
 I've made my own http lib over socket.unix. This is an intermediate step, next step whould be to use the existing http lib over socket.unix
+
+### there is some garbage checked in
+Kind of the first or second time using Lua as script language. So there are some intermediate files, to test some snippet code.
+
