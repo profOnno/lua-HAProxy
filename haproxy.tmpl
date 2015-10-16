@@ -1,0 +1,80 @@
+global
+	log /dev/log    local0
+	log /dev/log    local1 notice
+	chroot /var/lib/haproxy
+	tune.ssl.default-dh-param 2048
+	user haproxy
+	group haproxy
+	daemon
+
+defaults
+	log     global
+	mode    http
+	option  httplog
+	option  dontlognull
+	retries 3
+	#option redispatch
+	option http-server-close
+	#does next line kill image post?
+	option http-pretend-keepalive 
+	option forwardfor
+	maxconn 32
+
+	timeout connect 5000
+	timeout client 50000
+	timeout server 50000
+
+#       errorfile 400 /etc/haproxy/errors/400.http
+#       errorfile 403 /etc/haproxy/errors/403.http
+#       errorfile 408 /etc/haproxy/errors/408.http
+#       errorfile 500 /etc/haproxy/errors/500.http
+#       errorfile 502 /etc/haproxy/errors/502.http
+#       errorfile 503 /etc/haproxy/errors/503.http
+#       errorfile 504 /etc/haproxy/errors/504.http
+
+#       inspired by
+#       http://pastebin.com/4skE66SZ
+
+frontend http-in
+	bind *:80
+	#bind *:443 ssl crt /etc/haproxy/certs.d ciphers ECDHE-RSA-AES256-SHA:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM no-sslv3
+
+		#bind *:443 ssl crt /etc/haproxy/certs.d ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS no-sslv3
+		#       bind *:443 ssl crt /etc/haproxy/certs.d ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS no-sslv3
+		##
+	acl is_huiswerk hdr(host) -i huiswerk.mobip.nl
+> for i,c in ipairs(containers) do
+	acl is_$(c.Name) hdr(host) -i $(c.Name).pump.ninja
+> end
+
+       acl HAS_SSL     ssl_fc
+
+       #Tell backends that we actually using a secure connetion
+       reqadd X-Forwarded-Proto:\ https if HAS_SSL
+
+	# Secure whole subdomains
+	#       redirect scheme https if !HAS_SSL is_vegas_mobip
+	#       redirect scheme https if !HAS_SSL is_groen_mobip
+	#       redirect scheme https if !HAS_SSL is_pump_kuopzi
+	#       redirect scheme https if !HAS_SSL is_odoo
+
+	#Backend
+	use_backend be_test if is_test
+
+> for i,c in ipairs(containers) do
+	use_backend be_$(c.Name) if is_$(c.Name)
+> end
+
+	default_backend be_def
+
+
+backend be_def
+	server server1  172.17.42.1:32779
+
+backend be_huiswerk
+	server server1 127.0.0.1:8080
+
+> for i,c in ipairs(containers) do
+backend be_$(c.Name)
+	server server1 $(c.IPaddress):$(c.PublicPort)
+> end
