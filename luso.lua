@@ -24,6 +24,7 @@ containers={}
 table.foreach(res, function(a,b) 
 	local rec={}
 	rec.Id=b.Id
+	--strip front slash
 	rec.Name=string.sub(b.Names[1],2,-1)
 	if b.Ports[1] then
 		rec.PrivatePort=b.Ports[1].PrivatePort
