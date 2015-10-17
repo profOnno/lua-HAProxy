@@ -27,6 +27,7 @@ table.foreach(res, function(a,b)
 	--strip front slash
 	rec.Name=string.sub(b.Names[1],2,-1)
 	if b.Ports[1] then
+		rec.IP=b.Ports[1].IP
 		rec.PrivatePort=b.Ports[1].PrivatePort
 		rec.PublicPort=b.Ports[1].PublicPort
 	end
@@ -34,17 +35,6 @@ table.foreach(res, function(a,b)
 		table.insert(containers,rec)
 	end
 	end)
-
--- Get the IPaddress from the container info.
--- not needed when using localhost !?
-for i,val in ipairs(containers) do
---	b, c , h = http.request("http://localhost:8080/containers/"..val.Id.."/json")
-	h, b = unixHttp.request("/containers/"..val.Id.."/json")
-	local res = json.decode(b)
-	if res.NetworkSettings.IPAddress then
-		val.IPaddress = res.NetworkSettings.IPAddress
-	end
-end
 
 haptl=file.read("./haproxy.tmpl")
 mres = applyTemplate(haptl,{_escape='>',containers=containers,ipairs=ipairs})
