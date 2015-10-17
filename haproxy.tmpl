@@ -59,7 +59,6 @@ frontend http-in
 	#       redirect scheme https if !HAS_SSL is_odoo
 
 	#Backend
-	use_backend be_test if is_test
 
 > for i,c in ipairs(containers) do
 	use_backend be_$(c.Name) if is_$(c.Name)
