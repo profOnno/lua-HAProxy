@@ -39,15 +39,45 @@ function updateConfig()
 
 	haptl=file.read("./haproxy.tmpl")
 	mres = applyTemplate(haptl,{_escape='>',containers=containers,ipairs=ipairs})
+	file.copy("./haproxy.cfg","./haproxy.cfg.old")
 	file.write("./haproxy.cfg",mres)
-	print(mres)
+--	print(mres)
 end
 
 function restartHAProxy()
 	--note: there is a 'zero downtime version to restart haproxy'
 	--http://engineeringblog.yelp.com/2015/04/true-zero-downtime-haproxy-reloads.html
-	os.execute("haproxy - f ./haproxy.cfg -p /tmp/haproxy.pid sf $(cat /tmp/haproxy.pid)")
+	
+	if os.execute("test -e /tmp/haproxy.pid") > 0 then
+		cmd="haproxy -f ./haproxy.cfg -p /tmp/haproxy.pid"
+		os.execute(cmd)
+	else
+		pid=file.read("/tmp/haproxy.pid")
+
+		cmd="haproxy -f ./haproxy.cfg -p /tmp/haproxy.pid -sf "..pid
+		os.execute(cmd);
+		--os.execute(cmd);
+	end
 end
 
-updateConfig()
-restartHAProxy()
+function HAProxyNeedsUpdate()
+	return os.execute("diff ./haproxy.cfg ./haproxy.cfg.old > /dev/null") ~= 0
+end
+function sleep(sec)
+	return os.execute("sleep "..sec) == 0
+end
+
+repeat
+	updateConfig()
+
+	if HAProxyNeedsUpdate() then
+		print("Updating HAProxy")
+		restartHAProxy()
+	end
+	if not sleep(15) then
+		--sigint ?
+		os.exit(1)
+	end
+--	print("tick..")
+until false 
+
