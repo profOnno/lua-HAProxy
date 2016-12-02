@@ -39,13 +39,12 @@ HOST: localhost
 	chunked = false
 	for i,line in ipairs(header) do
 		if (line):lfind("Transfer-Encoding: chunked") then
---			print("got chunked")
 			chunked = true
 		end
 	end
 	--chunked ? print("chunked") : print("not chunked")
 	if (not chunked) then
-		local bodySize=(header[4]):split(":")[2]+0
+		local bodySize=(header[5]):split(":")[2]+0
 		body = c:receive(bodySize)
 --		print(body)
 		c:close()

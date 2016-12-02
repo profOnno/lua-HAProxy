@@ -35,24 +35,10 @@ defaults
 #       inspired by
 #       http://pastebin.com/4skE66SZ
 
-frontend letsencrypt-in
+frontend https-in
 	bind *:443
 	mode tcp
-	default_backend be_letsencrypt
-
-frontend xmpp-in
-	mode tcp
-	timeout client 3h
-	timeout server 3h
-	#enable sending keepalive
-	option clitcpka
-	bind *:5222
-	default_backend be_xmpp
-
-frontend xmpp-in2
-	mode tcp
-	bind *:5322
-	default_backend be_xmpp2
+	default_backend be_defs
 
 frontend http-in
 	bind *:80
@@ -87,21 +73,9 @@ frontend http-in
 backend be_def
 	#server server1  172.17.42.1:32779
 	server server1	172.17.0.5:80
-
 # https to letsencrypt
-backend be_letsencrypt
-	mode tcp
+backend be_defs
 	server server1 172.17.0.5:443
-
-backend be_xmpp
-	mode tcp
-	timeout server 3h
-	option srvtcpka
-	server server1 172.17.0.4:5222
-
-backend be_xmpp2
-	mode tcp
-	server server1 172.17.0.4:5322
 
 backend be_huiswerk
 	server server1 127.0.0.1:8080

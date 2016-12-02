@@ -1,6 +1,6 @@
 global
-#	log /dev/log    local0
-#	log /dev/log    local1 notice
+	log /dev/log    local0
+	log /dev/log    local1 notice
 	chroot /var/lib/haproxy
 	tune.ssl.default-dh-param 2048
 	user haproxy
@@ -8,10 +8,10 @@ global
 	daemon
 
 defaults
-	#log     global
+	log     global
 	mode    http
-	#option  httplog
-	#option  dontlognull
+	option  httplog
+	option  dontlognull
 	retries 3
 	#option redispatch
 	option http-server-close
@@ -35,25 +35,6 @@ defaults
 #       inspired by
 #       http://pastebin.com/4skE66SZ
 
-frontend letsencrypt-in
-	bind *:443
-	mode tcp
-	default_backend be_letsencrypt
-
-frontend xmpp-in
-	mode tcp
-	timeout client 3h
-	timeout server 3h
-	#enable sending keepalive
-	option clitcpka
-	bind *:5222
-	default_backend be_xmpp
-
-frontend xmpp-in2
-	mode tcp
-	bind *:5322
-	default_backend be_xmpp2
-
 frontend http-in
 	bind *:80
 	#bind *:443 ssl crt /etc/haproxy/certs.d ciphers ECDHE-RSA-AES256-SHA:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM no-sslv3
@@ -62,8 +43,7 @@ frontend http-in
 		#       bind *:443 ssl crt /etc/haproxy/certs.d ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS no-sslv3
 		##
 	acl is_huiswerk hdr(host) -i huiswerk.mobip.nl
-	acl is_plasterk hdr(host) -i plasterk.pump.ninja
-	acl is_adoring_booth hdr(host) -i adoring_booth.pump.ninja
+	acl is_agitated_ardinghelli hdr(host) -i agitated_ardinghelli.pump.ninja
 
        acl HAS_SSL     ssl_fc
 
@@ -78,35 +58,16 @@ frontend http-in
 
 	#Backend
 
-	use_backend be_plasterk if is_plasterk
-	use_backend be_adoring_booth if is_adoring_booth
+	use_backend be_agitated_ardinghelli if is_agitated_ardinghelli
 
 	default_backend be_def
 
 
 backend be_def
-	#server server1  172.17.42.1:32779
-	server server1	172.17.0.5:80
-
-# https to letsencrypt
-backend be_letsencrypt
-	mode tcp
-	server server1 172.17.0.5:443
-
-backend be_xmpp
-	mode tcp
-	timeout server 3h
-	option srvtcpka
-	server server1 172.17.0.4:5222
-
-backend be_xmpp2
-	mode tcp
-	server server1 172.17.0.4:5322
+	server server1  172.17.42.1:32779
 
 backend be_huiswerk
 	server server1 127.0.0.1:8080
 
-backend be_plasterk
-	server server1 172.17.0.3:80
-backend be_adoring_booth
-	server server1 172.17.0.2:80
+backend be_agitated_ardinghelli
+	server server1 0.0.0.0:32768
